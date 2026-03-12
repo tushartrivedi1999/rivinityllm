@@ -1,0 +1,38 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rivinity-config
+  namespace: rivinity
+data:
+  APP_ENV: "production"
+  APP_NAME: "Rivinity Nexus"
+  API_V1_PREFIX: ""
+  LOG_LEVEL: "INFO"
+  CORS_ORIGINS: '["*"]'
+
+  POSTGRES_HOST: "postgres"
+  POSTGRES_PORT: "5432"
+  POSTGRES_DB: "rivinity_nexus"
+  POSTGRES_USER: "rivinity"
+
+  REDIS_HOST: "redis"
+  REDIS_PORT: "6379"
+  REDIS_DB: "0"
+
+  CELERY_BROKER_URL: "redis://redis:6379/0"
+  CELERY_RESULT_BACKEND: "redis://redis:6379/1"
+
+  GPU_VENDOR_API_BASE: "https://vendor.example.com/api"
+  MODEL_STORAGE_PATH: "/app/storage/models"
+  DATASET_STORAGE_PATH: "/app/storage/datasets"
+  DATASET_CACHE_PATH: "/app/storage/cache/datasets"
+  DATASET_STREAM_BATCH_SIZE: "1000"
+
+  S3_ENABLED: "false"
+  S3_BUCKET: "rivinity-models"
+  S3_REGION: "us-east-1"
+
+  EXPERIMENT_TRACKING_ENABLED: "false"
+  EXPERIMENT_TRACKING_BACKEND: "mlflow"
+  MLFLOW_TRACKING_URI: "file:/tmp/rivinity/mlruns"
+  MLFLOW_EXPERIMENT_NAME: "rivinity-training"
