@@ -1,0 +1,25 @@
+# Requires Karpenter CRDs.
+apiVersion: karpenter.sh/v1beta1
+kind: NodePool
+metadata:
+  name: rivinity-gpu-pool
+  namespace: rivinity
+spec:
+  disruption:
+    consolidationPolicy: WhenUnderutilized
+  template:
+    metadata:
+      labels:
+        accelerator: nvidia
+        workload: rivinity-gpu
+    spec:
+      taints:
+        - key: nvidia.com/gpu
+          effect: NoSchedule
+      requirements:
+        - key: kubernetes.io/arch
+          operator: In
+          values: ["amd64"]
+        - key: karpenter.k8s.aws/instance-gpu-count
+          operator: Gt
+          values: ["0"]
