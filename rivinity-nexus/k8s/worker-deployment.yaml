@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rivinity-worker
+  namespace: rivinity
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: rivinity-worker
+  template:
+    metadata:
+      labels:
+        app: rivinity-worker
+    spec:
+      tolerations:
+        - key: "nvidia.com/gpu"
+          operator: "Exists"
+          effect: "NoSchedule"
+      nodeSelector:
+        accelerator: nvidia
+      containers:
+        - name: worker
+          image: rivinity/nexus-api:latest
+          imagePullPolicy: IfNotPresent
+          command: ["celery", "-A", "rivinity_nexus.workers.celery_app", "worker", "--loglevel=info", "--concurrency=2"]
+          envFrom:
+            - configMapRef:
+                name: rivinity-config
+            - secretRef:
+                name: rivinity-secrets
+          volumeMounts:
+            - name: model-data
+              mountPath: /app/storage/models
+            - name: dataset-data
+              mountPath: /app/storage/datasets
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "1Gi"
+              nvidia.com/gpu: "1"
+            limits:
+              cpu: "2"
+              memory: "4Gi"
+              nvidia.com/gpu: "1"
+      volumes:
+        - name: model-data
+          persistentVolumeClaim:
+            claimName: rivinity-model-pvc
+        - name: dataset-data
+          persistentVolumeClaim:
+            claimName: rivinity-dataset-pvc

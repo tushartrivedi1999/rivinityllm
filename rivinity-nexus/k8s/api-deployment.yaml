@@ -1,0 +1,94 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rivinity-api
+  namespace: rivinity
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: rivinity-api
+  template:
+    metadata:
+      labels:
+        app: rivinity-api
+    spec:
+      containers:
+        - name: api
+          image: rivinity/nexus-api:latest
+          imagePullPolicy: IfNotPresent
+          command: ["uvicorn", "rivinity_nexus.main:app", "--host", "0.0.0.0", "--port", "8000"]
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - configMapRef:
+                name: rivinity-config
+            - secretRef:
+                name: rivinity-secrets
+          volumeMounts:
+            - name: model-data
+              mountPath: /app/storage/models
+            - name: dataset-data
+              mountPath: /app/storage/datasets
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 20
+            periodSeconds: 15
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "1"
+              memory: "1Gi"
+      volumes:
+        - name: model-data
+          persistentVolumeClaim:
+            claimName: rivinity-model-pvc
+        - name: dataset-data
+          persistentVolumeClaim:
+            claimName: rivinity-dataset-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rivinity-api
+  namespace: rivinity
+spec:
+  selector:
+    app: rivinity-api
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8000
+  type: ClusterIP
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: rivinity-model-pvc
+  namespace: rivinity
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: 20Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: rivinity-dataset-pvc
+  namespace: rivinity
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: 20Gi
